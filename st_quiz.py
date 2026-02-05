@@ -147,8 +147,10 @@ st.title("IM quizer")
 
 st.markdown("Välj innehåll och skapa quiz.")
 
-links_text = st.text_area("Länkar att skrapa (en per rad)")
+links_text = st.text_area("Länkar att skrapa (en per rad) (valfritt)", placeholder="https://example.com/article1\nhttps://example.com/article2")
 prompt_text = st.text_area("Prompt", placeholder="Vad ska quizet fokusera på? Ex biverkningar, interaktioner mm.")
+questions = st.slider("Antal frågor", min_value=1, max_value=10, value=5, step=1)
+lakemedel_text = st.text_area("Information om specifika läkemedel (valfritt)")
 
 st.divider()
 
@@ -215,8 +217,7 @@ else:
 st.divider()
 
 st.subheader("Quiz generation")
-questions = st.slider("Antal frågor", min_value=1, max_value=10, value=5, step=1)
-lakemedel_text = st.text_area("Information om specifika läkemedel (valfritt)")
+
 
 if st.button("Skapa quiz"):
 	article_text = "\n\n".join(section_text_output).strip()
