@@ -14,3 +14,8 @@ venv/
 
 # Streamlit secrets
 .streamlit/secrets.toml
+
+#files
+treatments.json
+treatments.md
+quiz.ipynb
