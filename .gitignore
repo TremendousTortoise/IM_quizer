@@ -1,0 +1,16 @@
+# .gitignore file content
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Virtual Environment (if you use one)
+.venv/
+env/
+venv/
+
+# Mac system files
+.DS_Store
+
+# Streamlit secrets
+.streamlit/secrets.toml
