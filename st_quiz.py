@@ -2,12 +2,9 @@ import csv
 import json
 from pathlib import Path
 
-import os
-
 import requests
 import streamlit as st
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
@@ -76,17 +73,26 @@ def create_quiz(article, focus, questions=5, lakemedel="", link_text=""):
 	-Utdata-
 	Returnera enligt följande struktur men formatera i MARKDOWN utan extra förklarande text eller kommentarer.
 	Exempel:
+	
 	## Quiz om "fokuset av quizet"
+	
 	### Fråga 1
+	
 	Frågestam här (gärna utförlig och beskrivande)
+	
 	A. Svarsalternativ A
 	B. Svarsalternativ B
 	C. Svarsalternativ C
 	D. Svarsalternativ D
+	
 	**Rätt svar: B**
+	
 	**Förklaring:** Här kommer en pedagogisk förklaring som hjälper läsaren att förstå varför det rätta svaret är korrekt och varför de andra alternativen är felaktiga.
+	
 	---
+	
 	### Fråga 2
+	
 	och så vidare...
 	"""
 	prompt = ChatPromptTemplate.from_template(prompt_template)
@@ -98,14 +104,13 @@ def create_quiz(article, focus, questions=5, lakemedel="", link_text=""):
 		"link_text": link_text,
 	}
 
-	load_dotenv()
-	api_key = os.getenv("JOHAN_AZURE_OPENAI_KEY")
-	api_version = os.getenv("JOHAN_AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
-	api_endpoint = os.getenv("JOHAN_AZURE_OPENAI_ENDPOINT")
-	deployment = os.getenv("JOHAN_AZURE_OPENAI_DEPLOYMENT", "gpt-5-chat")
+	api_key = st.secrets.get("JOHAN_AZURE_OPENAI_KEY")
+	api_version = st.secrets.get("JOHAN_AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
+	api_endpoint = st.secrets.get("JOHAN_AZURE_OPENAI_ENDPOINT")
+	deployment = st.secrets.get("JOHAN_AZURE_OPENAI_DEPLOYMENT", "gpt-5-chat")
 
 	if not api_key or not api_endpoint:
-		raise RuntimeError("Azure OpenAI environment variables are missing.")
+		raise RuntimeError("Azure OpenAI secrets are missing.")
 
 	llm = AzureChatOpenAI(
 		azure_deployment=deployment,
@@ -169,18 +174,24 @@ else:
 		titles = sorted(data["title"].dropna().unique())
 		selected_titles = st.multiselect("Titel (searchable)", options=titles)
 		filtered = data[data["title"].isin(selected_titles)]
-		section_titles = sorted(filtered["section_title"].dropna())
+		filtered = filtered.dropna(subset=["title", "section_title"])
+		filtered = filtered.assign(
+			section_label=filtered["title"].astype(str).str.cat(
+				filtered["section_title"].astype(str), sep=" - "
+			)
+		)
+		section_labels = sorted(filtered["section_label"].unique())
 		selected_sections = st.multiselect(
-			"Avsnitt (section_title)",
-			options=section_titles,
+			"Avsnitt (title - section_title)",
+			options=section_labels,
 		)
 
 		if selected_sections:
-			selected_rows = filtered[filtered["section_title"].isin(selected_sections)]
-			for section_title in selected_sections:
-				st.markdown(f"### {section_title}")
+			selected_rows = filtered[filtered["section_label"].isin(selected_sections)]
+			for section_label in selected_sections:
+				st.markdown(f"### {section_label}")
 				texts = (
-					selected_rows[selected_rows["section_title"] == section_title][
+					selected_rows[selected_rows["section_label"] == section_label][
 						"section_text"
 					]
 					.dropna()
@@ -194,19 +205,28 @@ else:
 		titles = sorted({row["title"] for row in data if row.get("title")})
 		selected_titles = st.multiselect("Titel (searchable)", options=titles)
 		filtered = [row for row in data if row.get("title") in selected_titles]
-		section_titles = sorted({row["section_title"] for row in filtered if row.get("section_title")})
+		section_labels = sorted(
+			{
+				f"{row.get('title')} - {row.get('section_title')}"
+				for row in filtered
+				if row.get("title") and row.get("section_title")
+			}
+		)
 		selected_sections = st.multiselect(
-			"Avsnitt (section_title)",
-			options=section_titles,
+			"Avsnitt (title - section_title)",
+			options=section_labels,
 		)
 
 		if selected_sections:
-			for section_title in selected_sections:
-				st.markdown(f"### {section_title}")
+			for section_label in selected_sections:
+				st.markdown(f"### {section_label}")
 				texts = [
 					row.get("section_text")
 					for row in filtered
-					if row.get("section_title") == section_title and row.get("section_text")
+					if (
+						row.get("section_text")
+						and f"{row.get('title')} - {row.get('section_title')}" == section_label
+					)
 				]
 				for text in texts:
 					section_text_output.append(str(text))
