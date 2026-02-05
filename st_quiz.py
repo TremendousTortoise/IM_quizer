@@ -160,7 +160,7 @@ lakemedel_text = st.text_area("Information om specifika läkemedel (valfritt)")
 st.divider()
 
 
-st.subheader("Välj innehåll från treatments.csv")
+st.subheader("Välj innehåll från internetmedicin")
 data = load_treatments_data()
 
 selected_titles = []
@@ -168,7 +168,7 @@ selected_sections = []
 section_text_output = []
 
 if data is None:
-	st.error("treatments.csv kunde inte hittas i projektmappen.")
+	st.error("internetmedicin data kunde inte hittas i projektmappen.")
 else:
 	if pd is not None and hasattr(data, "columns"):
 		titles = sorted(data["title"].dropna().unique())
