@@ -147,12 +147,15 @@ def scrape_links(links):
 	return results
 
 
-st.set_page_config(page_title="IM quizer", layout="wide")
-st.title("IM quizer")
+st.set_page_config(page_title="IM quizzer", layout="wide")
+col1, col2, col3 = st.columns([2,1,2])
+with col2:
+    st.image("im-logo-white-text.png", width="stretch")
+st.title("IM Quizzer")
+st.divider()
+st.markdown("<h4>Välj innehåll och skapa quiz:</h4>", unsafe_allow_html=True)
 
-st.markdown("Välj innehåll och skapa quiz.")
-
-links_text = st.text_area("Länkar att skrapa (en per rad) (valfritt)", placeholder="https://example.com/article1\nhttps://example.com/article2")
+links_text = st.text_area("Länkar att skrapa, en per rad (valfritt)", placeholder="https://fass.se/exempel/\nhttps://example.com/")
 prompt_text = st.text_area("Prompt", placeholder="Vad ska quizet fokusera på? Ex biverkningar, interaktioner mm.")
 questions = st.slider("Antal frågor", min_value=1, max_value=10, value=5, step=1)
 lakemedel_text = st.text_area("Information om specifika läkemedel (valfritt)")
@@ -172,7 +175,7 @@ if data is None:
 else:
 	if pd is not None and hasattr(data, "columns"):
 		titles = sorted(data["title"].dropna().unique())
-		selected_titles = st.multiselect("Titel (searchable)", options=titles)
+		selected_titles = st.multiselect("Titel", options=titles)
 		filtered = data[data["title"].isin(selected_titles)]
 		filtered = filtered.dropna(subset=["title", "section_title"])
 		filtered = filtered.assign(
@@ -182,14 +185,13 @@ else:
 		)
 		section_labels = sorted(filtered["section_label"].unique())
 		selected_sections = st.multiselect(
-			"Avsnitt (title - section_title)",
+			"Avsnitt",
 			options=section_labels,
 		)
 
 		if selected_sections:
 			selected_rows = filtered[filtered["section_label"].isin(selected_sections)]
 			for section_label in selected_sections:
-				st.markdown(f"### {section_label}")
 				texts = (
 					selected_rows[selected_rows["section_label"] == section_label][
 						"section_text"
@@ -198,12 +200,11 @@ else:
 				)
 				for text in texts:
 					section_text_output.append(str(text))
-					st.write(text)
 		else:
 			st.info("Välj ett eller flera avsnitt för att visa text.")
 	else:
 		titles = sorted({row["title"] for row in data if row.get("title")})
-		selected_titles = st.multiselect("Titel (searchable)", options=titles)
+		selected_titles = st.multiselect("Titel", options=titles)
 		filtered = [row for row in data if row.get("title") in selected_titles]
 		section_labels = sorted(
 			{
@@ -213,13 +214,12 @@ else:
 			}
 		)
 		selected_sections = st.multiselect(
-			"Avsnitt (title - section_title)",
+			"Avsnitt",
 			options=section_labels,
 		)
 
 		if selected_sections:
 			for section_label in selected_sections:
-				st.markdown(f"### {section_label}")
 				texts = [
 					row.get("section_text")
 					for row in filtered
@@ -230,16 +230,18 @@ else:
 				]
 				for text in texts:
 					section_text_output.append(str(text))
-					st.write(text)
 		else:
 			st.info("Välj ett eller flera avsnitt för att visa text.")
 
 st.divider()
 
-st.subheader("Quiz generation")
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+	st.markdown("<h1 style='text-align: center;'>Skapa Quiz</h1>", unsafe_allow_html=True)
+	generate_quiz = st.button("Skapa quiz", width="stretch")
 
 
-if st.button("Skapa quiz"):
+if generate_quiz:
 	article_text = "\n\n".join(section_text_output).strip()
 	links = [link.strip() for link in links_text.splitlines() if link.strip()]
 
